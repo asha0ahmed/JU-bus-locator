@@ -351,7 +351,7 @@
   async function setupNotifications() {
     if (!('serviceWorker' in navigator)) return;
     try {
-      await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.register('/JU-bus-locator/sw.js');
     } catch (err) {
       console.error('SW registration failed:', err);
     }
