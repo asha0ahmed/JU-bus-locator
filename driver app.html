@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bus Driver Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 { font-size: 22px; margin-bottom: 20px; }
+    select, button {
+      width: 80%;
+      padding: 14px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+    }
+    button {
+      background: #e94560;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled { background: #555; }
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🚌 Driver Panel</h1>
+
+  <select id="busSelect">
+    <option value="">-- Select Your Bus --</option>
+    <option value="bus1">Bus 1</option>
+    <option value="bus2">Bus 2</option>
+    <option value="bus3">Bus 3</option>
+    <option value="bus4">Bus 4</option>
+    <option value="bus5">Bus 5</option>
+    <option value="bus6">Bus 6</option>
+    <option value="bus7">Bus 7</option>
+    <option value="bus8">Bus 8</option>
+    <option value="bus9">Bus 9</option>
+  </select>
+
+  <button id="startBtn" onclick="startTracking()">Start Sending Location</button>
+  <button id="stopBtn" onclick="stopTracking()" disabled>Stop</button>
+
+  <div id="status">Please select your bus and press Start.</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1fA_Clc5PEPDufI6KMemNlJ8hNsKhuKk",
+      authDomain: "ju-bus-locator.firebaseapp.com",
+      databaseURL: "https://ju-bus-locator-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "ju-bus-locator",
+      storageBucket: "ju-bus-locator.firebasestorage.app",
+      messagingSenderId: "98070717917",
+      appId: "1:98070717917:web:9740f08a0dbb06d9354234",
+      measurementId: "G-68FY4G21QF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let watchId = null;
+
+    window.startTracking = function () {
+      const busId = document.getElementById("busSelect").value;
+      if (!busId) {
+        alert("Please select your bus first!");
+        return;
+      }
+
+      document.getElementById("startBtn").disabled = true;
+      document.getElementById("stopBtn").disabled = false;
+      document.getElementById("status").textContent = "📡 Requesting GPS for " + busId + "...";
+
+      // ✅ watchPosition is triggered by user gesture and keeps updating automatically
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          set(ref(db, "buses/" + busId), {
+            lat: latitude,
+            lng: longitude,
+            timestamp: Date.now()
+          });
+          document.getElementById("status").textContent =
+            "✅ Sent: " + latitude.toFixed(5) + ", " + longitude.toFixed(5);
+        },
+        (err) => {
+          document.getElementById("status").textContent = "❌ GPS Error: " + err.message;
+        },
+        { enableHighAccuracy: true }
+      );
+    };
+
+    window.stopTracking = function () {
+      navigator.geolocation.clearWatch(watchId);
+      document.getElementById("startBtn").disabled = false;
+      document.getElementById("stopBtn").disabled = true;
+      document.getElementById("status").textContent = "🛑 Stopped sending location.";
+    };
+  </script>
+
+</body>
+</html>
