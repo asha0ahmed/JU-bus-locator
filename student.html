@@ -3,146 +3,273 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎓 JU Bus Locator</title>
+  <title>JU Bus Locator</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    :root {
+      --bg-deep:   #0d1117;
+      --bg-panel:  #161b27;
+      --bg-card:   #1e2535;
+      --accent:    #3b82f6;
+      --ok:        #22c55e;
+      --warn:      #f59e0b;
+      --danger:    #ef4444;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --border:    #2d3748;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f0f1a;
-      color: white;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
+      font-family:'Nunito',sans-serif;
+      background:var(--bg-deep); color:var(--text);
+      height:100vh; display:flex; flex-direction:column;
     }
 
+    /* Header */
     header {
-      background: #1a1a2e;
-      padding: 14px 20px;
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      border-bottom: 2px solid #e94560;
+      background:var(--bg-panel);
+      padding:12px 16px;
+      display:flex; align-items:center; gap:10px;
+      border-bottom:2px solid var(--border);
+    }
+    .header-icon {
+      width:36px; height:36px; border-radius:10px;
+      background:var(--accent);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 0 12px rgba(59,130,246,.4);
+      flex-shrink:0;
+    }
+    header h1 { font-size:1.1rem; font-weight:800; letter-spacing:-.3px; }
+    header h1 span { color:var(--accent); }
+    .live-badge {
+      margin-left:auto;
+      background:var(--ok); color:#fff;
+      font-size:.68rem; font-weight:700;
+      padding:4px 10px; border-radius:20px;
+      letter-spacing:.6px; text-transform:uppercase;
+      display:flex; align-items:center; gap:5px;
+    }
+    .live-dot {
+      width:7px; height:7px; border-radius:50%; background:#fff;
+      animation:pulse 1.2s infinite;
     }
 
+    /* Controls */
     #controls {
-      padding: 10px 16px;
-      background: #16213e;
-      display: flex;
-      gap: 10px;
-      align-items: center;
+      padding:10px 14px; background:var(--bg-panel);
+      display:flex; gap:8px; align-items:center;
+      border-bottom:1px solid var(--border);
     }
-
+    .select-wrap { flex:1; position:relative; }
+    .select-icon {
+      position:absolute; left:10px; top:50%;
+      transform:translateY(-50%);
+      display:flex; align-items:center;
+      pointer-events:none; z-index:1;
+    }
     select {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      background: #0f3460;
-      color: white;
-      font-size: 1rem;
+      width:100%; padding:9px 10px 9px 34px;
+      border-radius:10px; border:1.5px solid var(--border);
+      background:var(--bg-card); color:var(--text);
+      font-size:.9rem; font-family:'Nunito',sans-serif; font-weight:600;
+      appearance:none; cursor:pointer; outline:none;
+      transition:border-color .2s;
     }
-
-    #status {
-      padding: 8px 16px;
-      background: #1a1a2e;
-      font-size: 0.85rem;
-      color: #aaa;
-      text-align: center;
-    }
-
-    #distance-banner {
-      background: #0f3460;
-      padding: 10px 16px;
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #fff;
-      display: none;
-    }
-
-    #stop-selector {
-      padding: 8px 16px;
-      background: #16213e;
-      display: none;
-      gap: 10px;
-      align-items: center;
-    }
-
-    #stop-selector select {
-      flex: 1;
-    }
-
-    #map { flex: 1; }
-
-    #info-panel {
-      background: #1a1a2e;
-      padding: 12px 16px;
-      border-top: 2px solid #e94560;
-      font-size: 0.9rem;
-      display: flex;
-      justify-content: space-around;
-    }
-
-    .info-item span {
-      color: #e94560;
-      font-weight: bold;
-    }
+    select:focus { border-color:var(--accent); }
 
     #gps-btn {
-      padding: 10px 14px;
-      background: #e94560;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 0.9rem;
-      cursor: pointer;
+      display:flex; align-items:center; gap:7px;
+      padding:9px 14px; background:var(--accent);
+      border:none; border-radius:10px; color:#fff;
+      font-size:.85rem; font-family:'Nunito',sans-serif; font-weight:700;
+      cursor:pointer; white-space:nowrap;
+      box-shadow:0 2px 10px rgba(59,130,246,.3);
+      transition:background .2s,transform .1s;
     }
+    #gps-btn:hover { background:#2563eb; transform:translateY(-1px); }
+    #gps-btn:active { transform:translateY(0); }
+
+    /* Stop selector */
+    #stop-selector {
+      padding:8px 14px; background:var(--bg-panel);
+      display:none; gap:8px; align-items:center;
+      border-bottom:1px solid var(--border);
+    }
+
+    /* Distance banner */
+    #distance-banner {
+      padding:10px 16px; font-size:.95rem; font-weight:700; color:#fff;
+      display:none; align-items:center; justify-content:center; gap:10px;
+      transition:background .4s;
+    }
+    #distance-banner .pulse-dot {
+      width:8px; height:8px; border-radius:50%; background:#fff; opacity:.85;
+      animation:pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform:scale(1); opacity:.85; }
+      50%      { transform:scale(1.6); opacity:.3; }
+    }
+
+    /* Status */
+    #status {
+      padding:6px 14px; background:var(--bg-deep);
+      font-size:.78rem; color:var(--muted); text-align:center;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center; gap:6px;
+    }
+
+    /* Map */
+    #map { flex:1; }
+
+    /* Info panel */
+    #info-panel {
+      background:var(--bg-panel); padding:10px 16px;
+      border-top:1px solid var(--border);
+      display:flex; justify-content:space-around; gap:8px;
+    }
+    .info-item { display:flex; align-items:center; gap:8px; font-size:.78rem; color:var(--muted); }
+    .info-icon {
+      width:28px; height:28px; background:var(--bg-card);
+      border-radius:8px; display:flex; align-items:center; justify-content:center;
+      border:1px solid var(--border);
+    }
+    .info-item strong { color:var(--text); font-weight:700; font-size:.82rem; display:block; }
   </style>
 </head>
 <body>
 
-<header>🚌 JU Bus Locator</header>
+<!-- ── Inline SVG icon library ───────────────────────────────── -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- bus -->
+  <symbol id="ic-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="13" rx="2"/><path d="M3 10h18M8 18v2m8-2v2M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>
+    <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>
+  </symbol>
+  <!-- crosshairs / my location -->
+  <symbol id="ic-crosshairs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+  </symbol>
+  <!-- map pin -->
+  <symbol id="ic-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2C8.69 2 6 4.69 6 8c0 5 6 13 6 13s6-8 6-13c0-3.31-2.69-6-6-6z"/>
+    <circle cx="12" cy="8" r="2.5"/>
+  </symbol>
+  <!-- person -->
+  <symbol id="ic-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="6" r="3"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/>
+  </symbol>
+  <!-- clock -->
+  <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+  </symbol>
+  <!-- arrows up-down (lat) -->
+  <symbol id="ic-updown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5"/>
+  </symbol>
+  <!-- arrows left-right (lng) -->
+  <symbol id="ic-leftright" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/>
+  </symbol>
+  <!-- signal / live -->
+  <symbol id="ic-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/>
+  </symbol>
+  <!-- warning triangle -->
+  <symbol id="ic-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <!-- check circle -->
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </symbol>
+  <!-- spinner / rotate -->
+  <symbol id="ic-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
+  </symbol>
+</svg>
+
+<header>
+  <div class="header-icon">
+    <svg width="18" height="18"><use href="#ic-bus" style="color:white;stroke:white"/></svg>
+  </div>
+  <h1>JU <span>Bus</span> Locator</h1>
+  <span class="live-badge"><div class="live-dot"></div> Live</span>
+</header>
 
 <div id="controls">
-  <select id="busSelect">
-    <option value="all">🚌 All Buses</option>
-    <option value="bus1">Bus 1</option>
-    <option value="bus2">Bus 2</option>
-    <option value="bus3">Bus 3</option>
-    <option value="bus4">Bus 4</option>
-    <option value="bus5">Bus 5</option>
-    <option value="bus6">Bus 6</option>
-    <option value="bus7">Bus 7</option>
-    <option value="bus8">Bus 8</option>
-    <option value="bus9">Bus 9</option>
-  </select>
-  <button id="gps-btn" onclick="getStudentGPS()">📍 My Location</button>
+  <div class="select-wrap">
+    <span class="select-icon">
+      <svg width="14" height="14" style="color:var(--muted);stroke:var(--muted)"><use href="#ic-bus"/></svg>
+    </span>
+    <select id="busSelect">
+      <option value="all">All Buses</option>
+      <option value="bus1">Bus 1</option>
+      <option value="bus2">Bus 2</option>
+      <option value="bus3">Bus 3</option>
+      <option value="bus4">Bus 4</option>
+      <option value="bus5">Bus 5</option>
+      <option value="bus6">Bus 6</option>
+      <option value="bus7">Bus 7</option>
+      <option value="bus8">Bus 8</option>
+      <option value="bus9">Bus 9</option>
+    </select>
+  </div>
+  <button id="gps-btn" onclick="getStudentGPS()">
+    <svg width="14" height="14" style="stroke:white"><use href="#ic-crosshairs"/></svg>
+    My Location
+  </button>
 </div>
 
 <div id="stop-selector">
-  <select id="stopSelect" onchange="pickStop()">
-    <option value="">-- Pick a campus stop --</option>
-    <option value="23.8800,90.2618">Main Gate</option>
-    <option value="23.8823,90.2634">Transport Pool</option>
-    <option value="23.8791,90.2652">Central Field</option>
-    <option value="23.8810,90.2600">Zahir Raihan Hall</option>
-    <option value="23.8835,90.2610">Al-Beruni Hall</option>
-    <option value="23.8780,90.2630">New Arts Building</option>
-  </select>
+  <div class="select-wrap">
+    <span class="select-icon">
+      <svg width="14" height="14" style="stroke:var(--muted)"><use href="#ic-pin"/></svg>
+    </span>
+    <select id="stopSelect" onchange="pickStop()">
+      <option value="">— Pick a campus stop —</option>
+      <option value="23.8800,90.2618">Main Gate</option>
+      <option value="23.8823,90.2634">Transport Pool</option>
+      <option value="23.8791,90.2652">Central Field</option>
+      <option value="23.8810,90.2600">Zahir Raihan Hall</option>
+      <option value="23.8835,90.2610">Al-Beruni Hall</option>
+      <option value="23.8780,90.2630">New Arts Building</option>
+    </select>
+  </div>
 </div>
 
-<div id="distance-banner">🚌 Calculating distance...</div>
-<div id="status">⏳ Waiting for bus location...</div>
+<div id="distance-banner">
+  <div class="pulse-dot"></div>
+  <span id="banner-text">Calculating distance...</span>
+</div>
+<div id="status" id="statusBar">
+  <svg width="12" height="12" style="stroke:var(--muted);animation:spin-anim 1s linear infinite"><use href="#ic-spin"/></svg>
+  Waiting for bus location...
+</div>
 
 <div id="map"></div>
 
 <div id="info-panel">
-  <div class="info-item">🕒 Updated: <span id="lastUpdate">--</span></div>
-  <div class="info-item">📍 Lat: <span id="latVal">--</span></div>
-  <div class="info-item">📍 Lng: <span id="lngVal">--</span></div>
+  <div class="info-item">
+    <div class="info-icon"><svg width="14" height="14" style="stroke:var(--accent)"><use href="#ic-clock"/></svg></div>
+    <div><div>Updated</div><strong id="lastUpdate">--</strong></div>
+  </div>
+  <div class="info-item">
+    <div class="info-icon"><svg width="14" height="14" style="stroke:var(--accent)"><use href="#ic-updown"/></svg></div>
+    <div><div>Lat</div><strong id="latVal">--</strong></div>
+  </div>
+  <div class="info-item">
+    <div class="info-icon"><svg width="14" height="14" style="stroke:var(--accent)"><use href="#ic-leftright"/></svg></div>
+    <div><div>Lng</div><strong id="lngVal">--</strong></div>
+  </div>
 </div>
+
+<style>
+  @keyframes spin-anim { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+</style>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
@@ -160,223 +287,196 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db  = getDatabase(app);
 
   const map = L.map('map').setView([23.8800, 90.2618], 15);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  const studentIcon = L.divIcon({ html: '🧍', className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
-
-  // Bus labels for the map markers
-  const busLabels = {
-    bus1: '1️⃣', bus2: '2️⃣', bus3: '3️⃣',
-    bus4: '4️⃣', bus5: '5️⃣', bus6: '6️⃣',
-    bus7: '7️⃣', bus8: '8️⃣', bus9: '9️⃣'
+  const busColors = {
+    bus1:'#ef4444', bus2:'#f97316', bus3:'#eab308',
+    bus4:'#22c55e', bus5:'#06b6d4', bus6:'#3b82f6',
+    bus7:'#8b5cf6', bus8:'#ec4899', bus9:'#14b8a6'
   };
 
-  // Store markers and listeners for each bus
-  const busMarkers = {};   // busId → Leaflet marker
-  const busListeners = {}; // busId → Firebase unsubscribe ref
-
-  let studentMarker = null;
-  let studentLat = null;
-  let studentLng = null;
-
-  // ── Haversine Distance ──────────────────────────────────────
-  function getDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  // Inline SVG bus icon for map pins (self-contained, no external dependency)
+  function makeBusIcon(busId) {
+    const color = busColors[busId] || '#3b82f6';
+    const num   = busId.replace('bus','');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
+      <defs>
+        <filter id="sh${num}" x="-40%" y="-30%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="${color}" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+      <path d="M20 1C10.06 1 2 9.06 2 19c0 11 18 32 18 32S38 30 38 19C38 9.06 29.94 1 20 1z"
+            fill="${color}" filter="url(#sh${num})"/>
+      <circle cx="20" cy="18" r="12" fill="white"/>
+      <!-- mini bus shape -->
+      <rect x="13" y="13" width="14" height="9" rx="2" fill="${color}"/>
+      <rect x="14" y="12" width="12" height="2" rx="1" fill="${color}"/>
+      <circle cx="16" cy="22" r="1.5" fill="${color}"/>
+      <circle cx="24" cy="22" r="1.5" fill="${color}"/>
+      <line x1="13" y1="17" x2="27" y2="17" stroke="white" stroke-width="1"/>
+      <!-- bus number -->
+      <text x="20" y="16" text-anchor="middle"
+            font-family="Nunito,Arial,sans-serif" font-weight="800"
+            font-size="7" fill="white">${num}</text>
+    </svg>`;
+    return L.divIcon({
+      html: svg, className:'',
+      iconSize:[40,52], iconAnchor:[20,52], popupAnchor:[0,-54]
+    });
   }
 
-  // ── Find closest bus and update banner ─────────────────────
+  // Inline SVG person icon for student pin
+  function makeStudentIcon() {
+    const color = '#6366f1';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
+      <defs>
+        <filter id="shStu" x="-40%" y="-30%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="${color}" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+      <path d="M18 1C9.16 1 2 8.16 2 17c0 10 16 30 16 30S34 27 34 17C34 8.16 26.84 1 18 1z"
+            fill="${color}" filter="url(#shStu)"/>
+      <circle cx="18" cy="16" r="11" fill="white"/>
+      <!-- person shape -->
+      <circle cx="18" cy="11" r="3" fill="${color}"/>
+      <path d="M11 24 Q18 18 25 24" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <line x1="18" y1="18" x2="18" y2="23" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="14" y1="21" x2="22" y2="21" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="15" y1="23" x2="13" y2="27" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="21" y1="23" x2="23" y2="27" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>`;
+    return L.divIcon({
+      html: svg, className:'',
+      iconSize:[36,48], iconAnchor:[18,48], popupAnchor:[0,-50]
+    });
+  }
+
+  const busMarkers   = {};
+  const busListeners = {};
+  let studentMarker  = null;
+  let studentLat     = null;
+  let studentLng     = null;
+
+  function getDistance(lat1, lng1, lat2, lng2) {
+    const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+
   function updateDistanceBanner() {
-    if (studentLat === null) return;
-
-    let closestDist = Infinity;
-    let closestBus = null;
-
+    if (studentLat===null) return;
+    let closestDist=Infinity, closestBus=null;
     for (const busId in busMarkers) {
-      const marker = busMarkers[busId];
-      const pos = marker.getLatLng();
-      const dist = getDistance(studentLat, studentLng, pos.lat, pos.lng);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestBus = busId;
-      }
+      const pos=busMarkers[busId].getLatLng();
+      const dist=getDistance(studentLat,studentLng,pos.lat,pos.lng);
+      if (dist<closestDist) { closestDist=dist; closestBus=busId; }
     }
-
-    if (closestBus === null) return;
-
-    const banner = document.getElementById('distance-banner');
-    banner.style.display = 'block';
-
-    const busNum = closestBus.replace('bus', 'Bus ');
-
-    if (closestDist < 100) {
-      banner.textContent = `🚌 ${busNum} is HERE! (less than 100m)`;
-      banner.style.background = '#2ecc71';
-    } else if (closestDist < 500) {
-      banner.textContent = `🚌 ${busNum} is ${Math.round(closestDist)}m away — arriving soon!`;
-      banner.style.background = '#f39c12';
-    } else {
-      banner.textContent = `🚌 Nearest: ${busNum} — ${(closestDist/1000).toFixed(2)} km away`;
-      banner.style.background = '#0f3460';
-    }
-
+    if (!closestBus) return;
+    const banner=document.getElementById('distance-banner');
+    const bannerText=document.getElementById('banner-text');
+    banner.style.display='flex';
+    const label=closestBus.replace('bus','Bus ');
+    if (closestDist<100)       { banner.style.background='#166534'; bannerText.textContent=`${label} is HERE — less than 100m!`; }
+    else if (closestDist<500)  { banner.style.background='#92400e'; bannerText.textContent=`${label} is ${Math.round(closestDist)}m away — arriving soon!`; }
+    else                       { banner.style.background='#1e3a5f'; bannerText.textContent=`Nearest: ${label} — ${(closestDist/1000).toFixed(2)} km away`; }
     notifyIfClose(closestDist);
   }
 
-  // ── Track a single bus ──────────────────────────────────────
+  function setStatus(iconId, color, text) {
+    const bar = document.getElementById('status');
+    bar.innerHTML = `<svg width="12" height="12" style="stroke:${color};flex-shrink:0"><use href="#${iconId}"/></svg> ${text}`;
+  }
+
   function trackBus(busId) {
-    const busRef = ref(db, 'buses/' + busId);
-
-    const icon = L.divIcon({
-      html: busLabels[busId] || '🚌',
-      className: '',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
-    });
-
-    onValue(busRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-
-      if (!busMarkers[busId]) {
-        busMarkers[busId] = L.marker([data.lat, data.lng], { icon })
-          .addTo(map)
-          .bindPopup(`🚌 Bus ${busId.replace('bus', '')}`);
-      } else {
-        busMarkers[busId].setLatLng([data.lat, data.lng]);
-      }
-
-      // Update info panel with latest bus data
-      document.getElementById('latVal').textContent = data.lat.toFixed(5);
-      document.getElementById('lngVal').textContent = data.lng.toFixed(5);
-      document.getElementById('lastUpdate').textContent = new Date(data.timestamp).toLocaleTimeString();
-      document.getElementById('status').textContent = '✅ Live tracking active';
-
+    const busRef=ref(db,'buses/'+busId);
+    const icon=makeBusIcon(busId);
+    onValue(busRef,(snapshot)=>{
+      const data=snapshot.val(); if(!data) return;
+      if(!busMarkers[busId]) {
+        busMarkers[busId]=L.marker([data.lat,data.lng],{icon}).addTo(map)
+          .bindPopup(`<div style="font-family:Nunito,sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
+            <span style="width:10px;height:10px;border-radius:50%;background:${busColors[busId]};display:inline-block"></span>
+            Bus ${busId.replace('bus','')} — Live</div>`);
+      } else { busMarkers[busId].setLatLng([data.lat,data.lng]); }
+      document.getElementById('latVal').textContent=data.lat.toFixed(5);
+      document.getElementById('lngVal').textContent=data.lng.toFixed(5);
+      document.getElementById('lastUpdate').textContent=new Date(data.timestamp).toLocaleTimeString();
+      setStatus('ic-signal','#22c55e','Live tracking active');
       updateDistanceBanner();
     });
-
-    busListeners[busId] = busRef;
+    busListeners[busId]=busRef;
   }
 
-  // ── Stop tracking a single bus ──────────────────────────────
   function stopTrackingBus(busId) {
-    if (busListeners[busId]) {
-      off(busListeners[busId]);
-      delete busListeners[busId];
-    }
-    if (busMarkers[busId]) {
-      map.removeLayer(busMarkers[busId]);
-      delete busMarkers[busId];
-    }
+    if(busListeners[busId]){off(busListeners[busId]);delete busListeners[busId];}
+    if(busMarkers[busId]){map.removeLayer(busMarkers[busId]);delete busMarkers[busId];}
   }
 
-  // ── Track all buses ─────────────────────────────────────────
-  function trackAllBuses() {
-    ['bus1','bus2','bus3','bus4','bus5','bus6','bus7','bus8','bus9'].forEach(trackBus);
-  }
+  function trackAllBuses()   { for(let i=1;i<=9;i++) trackBus('bus'+i); }
+  function stopAllTracking() { for(let i=1;i<=9;i++) stopTrackingBus('bus'+i); }
 
-  // ── Stop all tracking ───────────────────────────────────────
-  function stopAllTracking() {
-    ['bus1','bus2','bus3','bus4','bus5','bus6','bus7','bus8','bus9'].forEach(stopTrackingBus);
-  }
-
-  // ── Bus selector change ─────────────────────────────────────
-  document.getElementById('busSelect').addEventListener('change', (e) => {
+  document.getElementById('busSelect').addEventListener('change',(e)=>{
     stopAllTracking();
-    document.getElementById('distance-banner').style.display = 'none';
-    document.getElementById('status').textContent = '⏳ Waiting for bus location...';
-
-    if (e.target.value === 'all') {
-      trackAllBuses();
-    } else {
-      trackBus(e.target.value);
-    }
+    document.getElementById('distance-banner').style.display='none';
+    setStatus('ic-spin','var(--muted)','Waiting for bus location...');
+    e.target.value==='all' ? trackAllBuses() : trackBus(e.target.value);
   });
 
-  // ── Student location ────────────────────────────────────────
-  function setStudentLocation(lat, lng, label) {
-    studentLat = lat;
-    studentLng = lng;
-    if (studentMarker) map.removeLayer(studentMarker);
-    studentMarker = L.marker([lat, lng], { icon: studentIcon })
-      .addTo(map)
-      .bindPopup(label)
+  function setStudentLocation(lat,lng,label) {
+    studentLat=lat; studentLng=lng;
+    if(studentMarker) map.removeLayer(studentMarker);
+    studentMarker=L.marker([lat,lng],{icon:makeStudentIcon()}).addTo(map)
+      .bindPopup(`<div style="font-family:Nunito,sans-serif;font-weight:700;font-size:13px">${label}</div>`)
       .openPopup();
     updateDistanceBanner();
   }
 
   window.getStudentGPS = function() {
-    if (!navigator.geolocation) {
-      showStopSelector("GPS not supported on this device.");
-      return;
-    }
-    document.getElementById('status').textContent = '📡 Getting your location...';
+    if(!navigator.geolocation){showStopSelector('GPS not supported.');return;}
+    setStatus('ic-crosshairs','#3b82f6','Getting your location...');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setStudentLocation(pos.coords.latitude, pos.coords.longitude, "📍 You are here");
-        document.getElementById('status').textContent = '✅ Your location found via GPS';
+      (pos)=>{
+        setStudentLocation(pos.coords.latitude,pos.coords.longitude,'Your Location');
+        setStatus('ic-check','#22c55e','Your location found via GPS');
       },
-      () => {
-        showStopSelector("GPS failed. Please pick your stop:");
-      }
+      ()=>showStopSelector('GPS failed. Please pick your stop:')
     );
   };
 
   window.pickStop = function() {
-    const val = document.getElementById('stopSelect').value;
-    if (!val) return;
-    const [lat, lng] = val.split(',').map(Number);
-    setStudentLocation(lat, lng, "📍 Selected stop");
-    document.getElementById('status').textContent = '✅ Stop selected';
+    const val=document.getElementById('stopSelect').value; if(!val) return;
+    const [lat,lng]=val.split(',').map(Number);
+    setStudentLocation(lat,lng,'Selected Stop');
+    setStatus('ic-check','#22c55e','Stop selected');
   };
 
   function showStopSelector(msg) {
-    document.getElementById('status').textContent = msg;
-    document.getElementById('stop-selector').style.display = 'flex';
+    setStatus('ic-warn','#f59e0b',msg);
+    document.getElementById('stop-selector').style.display='flex';
   }
 
-  // ── Notifications ───────────────────────────────────────────
-  let notifiedClose = false;
-
-  async function setupNotifications() {
-    if (!('serviceWorker' in navigator)) return;
-    try {
-      await navigator.serviceWorker.register('/JU-bus-locator/sw.js');
-    } catch (err) {
-      console.error('SW registration failed:', err);
-    }
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      alert('Please allow notifications to get bus alerts!');
-    }
+  let notifiedClose=false;
+  async function setupNotifications(){
+    if(!('serviceWorker' in navigator)) return;
+    try { await navigator.serviceWorker.register('/JU-bus-locator/sw.js'); } catch(e){console.error(e);}
+    const p=await Notification.requestPermission();
+    if(p!=='granted') alert('Please allow notifications to get bus alerts!');
   }
-
-  function notifyIfClose(distanceMeters) {
-    if (distanceMeters < 500 && !notifiedClose) {
-      notifiedClose = true;
-      new Notification('🚌 Bus is nearby!', {
-        body: `The bus is ${Math.round(distanceMeters)}m away. Get ready!`,
-      });
-      setTimeout(() => { notifiedClose = false; }, 2 * 60 * 1000);
+  function notifyIfClose(d){
+    if(d<500&&!notifiedClose){
+      notifiedClose=true;
+      new Notification('Bus is nearby!',{body:`The bus is ${Math.round(d)}m away. Get ready!`});
+      setTimeout(()=>{notifiedClose=false;},120000);
     }
   }
 
   setupNotifications();
-
-  // ── Start: show all buses by default ───────────────────────
   trackAllBuses();
-
 </script>
-
 </body>
 </html>
