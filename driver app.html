@@ -4,120 +4,321 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bus Driver Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-deep:  #0d1117;
+      --bg-panel: #161b27;
+      --bg-card:  #1e2535;
+      --accent:   #3b82f6;
+      --danger:   #ef4444;
+      --success:  #22c55e;
+      --text:     #f1f5f9;
+      --muted:    #64748b;
+      --border:   #2d3748;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background: #1a1a2e;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      font-family:'Nunito',sans-serif;
+      background:var(--bg-deep); color:var(--text);
+      min-height:100vh;
+      display:flex; flex-direction:column; align-items:center;
+      padding:0 20px 40px;
     }
-    h1 { font-size: 22px; margin-bottom: 20px; }
-    select, button {
-      width: 80%;
-      padding: 14px;
-      margin: 10px 0;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
+
+    /* Header */
+    header {
+      width:100%; padding:24px 0 16px;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      border-bottom:1px solid var(--border); margin-bottom:28px;
     }
-    button {
-      background: #e94560;
-      color: white;
-      cursor: pointer;
+    .logo {
+      width:60px; height:60px;
+      background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+      border-radius:18px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 4px 20px rgba(59,130,246,.35);
+      margin-bottom:4px;
     }
-    button:disabled { background: #555; }
-    #status {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #aaa;
-      text-align: center;
+    header h1 { font-size:1.3rem; font-weight:800; letter-spacing:-.4px; }
+    header p  { font-size:.78rem; color:var(--muted); font-weight:600; }
+
+    /* Card */
+    .card {
+      width:100%; max-width:400px;
+      background:var(--bg-panel); border:1px solid var(--border);
+      border-radius:18px; padding:22px;
+      display:flex; flex-direction:column; gap:16px;
     }
+    .field-label {
+      font-size:.72rem; font-weight:700; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.9px; margin-bottom:6px;
+    }
+
+    /* Bus grid */
+    .bus-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .bus-btn {
+      padding:12px 4px 10px; border-radius:12px;
+      border:2px solid var(--border); background:var(--bg-card);
+      color:var(--text);
+      font-family:'Nunito',sans-serif; font-size:.82rem; font-weight:700;
+      cursor:pointer;
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      transition:border-color .15s,background .15s,transform .1s;
+      position:relative;
+    }
+    .bus-btn:hover  { transform:translateY(-2px); }
+    .bus-btn:active { transform:translateY(0); }
+
+    .bus-pin {
+      width:32px; height:32px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 2px 8px rgba(0,0,0,.3);
+    }
+    .bus-pin svg { transform:rotate(45deg); }
+
+    /* Per-bus colors */
+    .bus-btn[data-bus="bus1"] .bus-pin { background:#ef4444; }
+    .bus-btn[data-bus="bus2"] .bus-pin { background:#f97316; }
+    .bus-btn[data-bus="bus3"] .bus-pin { background:#eab308; }
+    .bus-btn[data-bus="bus4"] .bus-pin { background:#22c55e; }
+    .bus-btn[data-bus="bus5"] .bus-pin { background:#06b6d4; }
+    .bus-btn[data-bus="bus6"] .bus-pin { background:#3b82f6; }
+    .bus-btn[data-bus="bus7"] .bus-pin { background:#8b5cf6; }
+    .bus-btn[data-bus="bus8"] .bus-pin { background:#ec4899; }
+    .bus-btn[data-bus="bus9"] .bus-pin { background:#14b8a6; }
+
+    .bus-btn[data-bus="bus1"].selected { border-color:#ef4444; color:#ef4444; }
+    .bus-btn[data-bus="bus2"].selected { border-color:#f97316; color:#f97316; }
+    .bus-btn[data-bus="bus3"].selected { border-color:#eab308; color:#eab308; }
+    .bus-btn[data-bus="bus4"].selected { border-color:#22c55e; color:#22c55e; }
+    .bus-btn[data-bus="bus5"].selected { border-color:#06b6d4; color:#06b6d4; }
+    .bus-btn[data-bus="bus6"].selected { border-color:#3b82f6; color:#3b82f6; }
+    .bus-btn[data-bus="bus7"].selected { border-color:#8b5cf6; color:#8b5cf6; }
+    .bus-btn[data-bus="bus8"].selected { border-color:#ec4899; color:#ec4899; }
+    .bus-btn[data-bus="bus9"].selected { border-color:#14b8a6; color:#14b8a6; }
+    .bus-btn.selected { background:rgba(255,255,255,.04); }
+
+    /* Check badge */
+    .check-badge {
+      display:none; position:absolute; top:6px; right:6px;
+      width:16px; height:16px; border-radius:50%; background:var(--success);
+      align-items:center; justify-content:center;
+    }
+    .bus-btn.selected .check-badge { display:flex; }
+
+    /* Action buttons */
+    .action-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btn {
+      padding:13px; border-radius:12px; border:none;
+      font-family:'Nunito',sans-serif; font-size:.9rem; font-weight:800;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      transition:opacity .2s,transform .1s;
+    }
+    .btn:hover:not(:disabled)  { transform:translateY(-1px); opacity:.9; }
+    .btn:active:not(:disabled) { transform:translateY(0); }
+    .btn:disabled { opacity:.3; cursor:not-allowed; }
+    .btn-start { background:var(--success); color:#fff; box-shadow:0 3px 14px rgba(34,197,94,.3); }
+    .btn-stop  { background:var(--danger);  color:#fff; box-shadow:0 3px 14px rgba(239,68,68,.3); }
+
+    /* Status card */
+    #status-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:12px; padding:14px;
+      display:flex; align-items:center; gap:12px; font-size:.85rem;
+    }
+    .status-icon-wrap {
+      width:36px; height:36px; border-radius:10px;
+      background:var(--bg-panel); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:background .3s,border-color .3s;
+    }
+    .status-icon-wrap.active { background:rgba(34,197,94,.12); border-color:#22c55e; }
+    .status-icon-wrap.error  { background:rgba(239,68,68,.12);  border-color:#ef4444; }
+    #status-text { color:var(--muted); line-height:1.5; font-size:.82rem; }
+
+    /* Coords */
+    #coords-row {
+      display:none;
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:12px; padding:10px 14px;
+      font-size:.75rem; color:var(--muted);
+      justify-content:space-between; align-items:center; gap:8px;
+    }
+    .coord-item { display:flex; align-items:center; gap:6px; }
+    #coords-row span { color:var(--text); font-weight:700; font-family:monospace; }
+
+    @keyframes spin-anim { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   </style>
 </head>
 <body>
 
-  <h1>🚌 Driver Panel</h1>
+<!-- Inline SVG icon definitions -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="ic-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="13" rx="2"/>
+    <path d="M3 10h18M8 18v2m8-2v2M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>
+    <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="ic-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="ic-satellite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m3.5 13 4-4 3 3 4-4 3 3"/><path d="M20 16.5A3.5 3.5 0 0 1 16.5 20"/><path d="M6.5 3A3.5 3.5 0 0 0 3 6.5"/>
+    <circle cx="17" cy="7" r="3"/><path d="m14 10 6 6"/>
+  </symbol>
+  <symbol id="ic-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="ic-updown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5"/>
+  </symbol>
+  <symbol id="ic-leftright" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/>
+  </symbol>
+  <symbol id="ic-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
+  </symbol>
+</svg>
 
-  <select id="busSelect">
-    <option value="">-- Select Your Bus --</option>
-    <option value="bus1">Bus 1</option>
-    <option value="bus2">Bus 2</option>
-    <option value="bus3">Bus 3</option>
-    <option value="bus4">Bus 4</option>
-    <option value="bus5">Bus 5</option>
-    <option value="bus6">Bus 6</option>
-    <option value="bus7">Bus 7</option>
-    <option value="bus8">Bus 8</option>
-    <option value="bus9">Bus 9</option>
-  </select>
+<header>
+  <div class="logo">
+    <svg width="28" height="28" style="stroke:white"><use href="#ic-bus"/></svg>
+  </div>
+  <h1>Driver Panel</h1>
+  <p>Jahangirnagar University Bus Tracker</p>
+</header>
 
-  <button id="startBtn" onclick="startTracking()">Start Sending Location</button>
-  <button id="stopBtn" onclick="stopTracking()" disabled>Stop</button>
+<div class="card">
 
-  <div id="status">Please select your bus and press Start.</div>
+  <div>
+    <div class="field-label">Select Your Bus</div>
+    <div class="bus-grid" id="busGrid"></div>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  <div class="action-row">
+    <button class="btn btn-start" id="startBtn" onclick="startTracking()">
+      <svg width="16" height="16" style="stroke:white"><use href="#ic-play"/></svg>
+      Start
+    </button>
+    <button class="btn btn-stop" id="stopBtn" onclick="stopTracking()" disabled>
+      <svg width="16" height="16" style="stroke:white"><use href="#ic-stop"/></svg>
+      Stop
+    </button>
+  </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB1fA_Clc5PEPDufI6KMemNlJ8hNsKhuKk",
-      authDomain: "ju-bus-locator.firebaseapp.com",
-      databaseURL: "https://ju-bus-locator-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "ju-bus-locator",
-      storageBucket: "ju-bus-locator.firebasestorage.app",
-      messagingSenderId: "98070717917",
-      appId: "1:98070717917:web:9740f08a0dbb06d9354234",
-      measurementId: "G-68FY4G21QF"
+  <div id="status-card">
+    <div class="status-icon-wrap" id="statusIcon">
+      <svg width="16" height="16" style="stroke:var(--muted)"><use href="#ic-satellite"/></svg>
+    </div>
+    <div id="status-text">Select a bus and press Start to begin sharing your location.</div>
+  </div>
+
+  <div id="coords-row">
+    <div class="coord-item">
+      <svg width="12" height="12" style="stroke:var(--accent)"><use href="#ic-updown"/></svg>
+      Lat: <span id="latOut">--</span>
+    </div>
+    <div class="coord-item">
+      <svg width="12" height="12" style="stroke:var(--accent)"><use href="#ic-leftright"/></svg>
+      Lng: <span id="lngOut">--</span>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB1fA_Clc5PEPDufI6KMemNlJ8hNsKhuKk",
+    authDomain: "ju-bus-locator.firebaseapp.com",
+    databaseURL: "https://ju-bus-locator-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "ju-bus-locator",
+    storageBucket: "ju-bus-locator.firebasestorage.app",
+    messagingSenderId: "98070717917",
+    appId: "1:98070717917:web:9740f08a0dbb06d9354234",
+    measurementId: "G-68FY4G21QF"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // Build bus grid
+  const grid = document.getElementById('busGrid');
+  let selectedBus = null;
+
+  for (let i = 1; i <= 9; i++) {
+    const busId = 'bus' + i;
+    const btn   = document.createElement('button');
+    btn.className   = 'bus-btn';
+    btn.dataset.bus = busId;
+    btn.innerHTML   = `
+      <div class="check-badge">
+        <svg width="9" height="9" style="stroke:white"><use href="#ic-check"/></svg>
+      </div>
+      <div class="bus-pin">
+        <svg width="14" height="14" style="stroke:white"><use href="#ic-bus"/></svg>
+      </div>
+      <span>Bus ${i}</span>`;
+    btn.onclick = () => {
+      document.querySelectorAll('.bus-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedBus = busId;
     };
+    grid.appendChild(btn);
+  }
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  let watchId = null;
 
-    let watchId = null;
+  window.startTracking = function () {
+    if (!selectedBus) { setStatus('error','ic-warn','var(--danger)','Please select a bus first.'); return; }
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled  = false;
+    setStatus('active','ic-spin','#22c55e',`Requesting GPS for ${selectedBus.replace('bus','Bus ')}...`, true);
 
-    window.startTracking = function () {
-      const busId = document.getElementById("busSelect").value;
-      if (!busId) {
-        alert("Please select your bus first!");
-        return;
-      }
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        set(ref(db,'buses/'+selectedBus),{ lat:latitude, lng:longitude, timestamp:Date.now() });
+        setStatus('active','ic-satellite','#22c55e',`Sending live location for ${selectedBus.replace('bus','Bus ')}`);
+        document.getElementById('latOut').textContent  = latitude.toFixed(5);
+        document.getElementById('lngOut').textContent  = longitude.toFixed(5);
+        document.getElementById('coords-row').style.display = 'flex';
+      },
+      (err) => { setStatus('error','ic-warn','var(--danger)','GPS Error: '+err.message); },
+      { enableHighAccuracy:true }
+    );
+  };
 
-      document.getElementById("startBtn").disabled = true;
-      document.getElementById("stopBtn").disabled = false;
-      document.getElementById("status").textContent = "📡 Requesting GPS for " + busId + "...";
+  window.stopTracking = function () {
+    navigator.geolocation.clearWatch(watchId);
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled  = true;
+    document.getElementById('coords-row').style.display = 'none';
+    setStatus('idle','ic-stop','var(--muted)','Location sharing stopped.');
+  };
 
-      // ✅ watchPosition is triggered by user gesture and keeps updating automatically
-      watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          set(ref(db, "buses/" + busId), {
-            lat: latitude,
-            lng: longitude,
-            timestamp: Date.now()
-          });
-          document.getElementById("status").textContent =
-            "✅ Sent: " + latitude.toFixed(5) + ", " + longitude.toFixed(5);
-        },
-        (err) => {
-          document.getElementById("status").textContent = "❌ GPS Error: " + err.message;
-        },
-        { enableHighAccuracy: true }
-      );
-    };
-
-    window.stopTracking = function () {
-      navigator.geolocation.clearWatch(watchId);
-      document.getElementById("startBtn").disabled = false;
-      document.getElementById("stopBtn").disabled = true;
-      document.getElementById("status").textContent = "🛑 Stopped sending location.";
-    };
-  </script>
-
+  function setStatus(type, iconId, color, msg, spin=false) {
+    const wrap = document.getElementById('statusIcon');
+    const text = document.getElementById('status-text');
+    wrap.className = 'status-icon-wrap' + (type==='idle' ? '' : ' '+type);
+    const animStyle = spin ? `style="stroke:${color};animation:spin-anim 1s linear infinite"` : `style="stroke:${color}"`;
+    wrap.innerHTML  = `<svg width="16" height="16" ${animStyle}><use href="#${iconId}"/></svg>`;
+    text.textContent = msg;
+  }
+</script>
 </body>
 </html>
