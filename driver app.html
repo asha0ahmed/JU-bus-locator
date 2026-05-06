@@ -351,7 +351,9 @@
 
   let watchId = null;
 
-  window.startTracking = function () {
+let wakeLock = null;
+
+  window.startTracking = async function () {
     if (!selectedBus)       { setStatus('error','ic-warn','var(--danger)','Please select a bus first.'); return; }
     if (!selectedDirection) { setStatus('error','ic-warn','var(--danger)','Please select a direction.'); return; }
 
@@ -359,7 +361,50 @@
     document.getElementById('stopBtn').disabled  = false;
     setStatus('active','ic-spin','#22c55e',`Requesting GPS for ${selectedBus.replace('bus','Bus ')}...`, true);
 
+    // Request wake lock so screen stays on
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+      } catch (e) {
+        console.warn('Wake lock failed:', e);
+      }
+    }
+
     watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        set(ref(db, 'buses/' + selectedBus), {
+          lat:       latitude,
+          lng:       longitude,
+          direction: selectedDirection,
+          timestamp: Date.now()
+        });
+        const dirLabel = selectedDirection === 'campus-to-dhaka' ? 'Campus → Dhaka' : 'Dhaka → Campus';
+        setStatus('active','ic-satellite','#22c55e',
+          `${selectedBus.replace('bus','Bus ')} · ${dirLabel} · Keep phone plugged in!`);
+        document.getElementById('latOut').textContent = latitude.toFixed(5);
+        document.getElementById('lngOut').textContent = longitude.toFixed(5);
+        document.getElementById('coords-row').style.display = 'flex';
+      },
+      (err) => { setStatus('error','ic-warn','var(--danger)','GPS Error: ' + err.message); },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  window.stopTracking = async function () {
+    navigator.geolocation.clearWatch(watchId);
+
+    // Release wake lock
+    if (wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled  = true;
+    document.getElementById('coords-row').style.display = 'none';
+    setStatus('idle','ic-stop','var(--muted)','Location sharing stopped.');
+  };
       (pos) => {
         const { latitude, longitude } = pos.coords;
         set(ref(db, 'buses/' + selectedBus), {
