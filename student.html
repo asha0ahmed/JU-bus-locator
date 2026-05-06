@@ -413,7 +413,11 @@ onValue(busRef,(snapshot)=>{
       // If last update was more than 30 seconds ago, treat as offline
       const age = Date.now() - data.timestamp;
       if(age > 30000) {
-        setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${Math.round(age/1000)}s ago`);
+        let agoStr;
+if (age < 60000) agoStr = `${Math.round(age/1000)}s ago`;
+else if (age < 3600000) agoStr = `${Math.floor(age/60000)}m ${Math.round((age%60000)/1000)}s ago`;
+else agoStr = `${Math.floor(age/3600000)}h ${Math.floor((age%3600000)/60000)}m ago`;
+setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${agoStr}`);
         return;
       }
 
