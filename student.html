@@ -407,8 +407,15 @@
 
   function trackBus(busId){
     const busRef=ref(db,'buses/'+busId);
-    onValue(busRef,(snapshot)=>{
+onValue(busRef,(snapshot)=>{
       const data=snapshot.val(); if(!data) return;
+      
+      // If last update was more than 30 seconds ago, treat as offline
+      const age = Date.now() - data.timestamp;
+      if(age > 30000) {
+        setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${Math.round(age/1000)}s ago`);
+        return;
+      }
 
       // Store latest direction
       busDirections[busId] = data.direction || null;
