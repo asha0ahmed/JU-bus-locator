@@ -26,7 +26,6 @@
       height:100vh; display:flex; flex-direction:column;
     }
 
-    /* Header */
     header {
       background:var(--bg-panel);
       padding:12px 16px;
@@ -55,7 +54,6 @@
       animation:pulse 1.2s infinite;
     }
 
-    /* Controls */
     #controls {
       padding:10px 14px; background:var(--bg-panel);
       display:flex; gap:8px; align-items:center;
@@ -90,14 +88,12 @@
     #gps-btn:hover { background:#2563eb; transform:translateY(-1px); }
     #gps-btn:active { transform:translateY(0); }
 
-    /* Stop selector */
     #stop-selector {
       padding:8px 14px; background:var(--bg-panel);
       display:none; gap:8px; align-items:center;
       border-bottom:1px solid var(--border);
     }
 
-    /* Distance banner */
     #distance-banner {
       padding:10px 16px; font-size:.95rem; font-weight:700; color:#fff;
       display:none; align-items:center; justify-content:center; gap:10px;
@@ -112,7 +108,6 @@
       50%      { transform:scale(1.6); opacity:.3; }
     }
 
-    /* Status */
     #status {
       padding:6px 14px; background:var(--bg-deep);
       font-size:.78rem; color:var(--muted); text-align:center;
@@ -120,10 +115,8 @@
       display:flex; align-items:center; justify-content:center; gap:6px;
     }
 
-    /* Map */
     #map { flex:1; }
 
-    /* Info panel */
     #info-panel {
       background:var(--bg-panel); padding:10px 16px;
       border-top:1px solid var(--border);
@@ -136,57 +129,61 @@
       border:1px solid var(--border);
     }
     .info-item strong { color:var(--text); font-weight:700; font-size:.82rem; display:block; }
+
+    /* ── Direction label floating above each bus pin ── */
+    .bus-label-wrap {
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+    }
+    .dir-tag {
+      background:rgba(15,17,26,.85);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:6px;
+      padding:2px 7px;
+      font-family:'Nunito',sans-serif;
+      font-size:10px; font-weight:700;
+      color:#fff;
+      white-space:nowrap;
+      backdrop-filter:blur(4px);
+      line-height:1.4;
+    }
+
+    @keyframes spin-anim { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   </style>
 </head>
 <body>
 
-<!-- ── Inline SVG icon library ───────────────────────────────── -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
-  <!-- bus -->
   <symbol id="ic-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="3" y="5" width="18" height="13" rx="2"/><path d="M3 10h18M8 18v2m8-2v2M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>
     <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/>
     <circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>
   </symbol>
-  <!-- crosshairs / my location -->
   <symbol id="ic-crosshairs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
     <circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
   </symbol>
-  <!-- map pin -->
   <symbol id="ic-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2C8.69 2 6 4.69 6 8c0 5 6 13 6 13s6-8 6-13c0-3.31-2.69-6-6-6z"/>
     <circle cx="12" cy="8" r="2.5"/>
   </symbol>
-  <!-- person -->
-  <symbol id="ic-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="6" r="3"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/>
-  </symbol>
-  <!-- clock -->
   <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
     <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
   </symbol>
-  <!-- arrows up-down (lat) -->
   <symbol id="ic-updown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5"/>
   </symbol>
-  <!-- arrows left-right (lng) -->
   <symbol id="ic-leftright" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/>
   </symbol>
-  <!-- signal / live -->
   <symbol id="ic-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
     <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/>
   </symbol>
-  <!-- warning triangle -->
   <symbol id="ic-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
     <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
   </symbol>
-  <!-- check circle -->
   <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
   </symbol>
-  <!-- spinner / rotate -->
   <symbol id="ic-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
     <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
   </symbol>
@@ -194,7 +191,7 @@
 
 <header>
   <div class="header-icon">
-    <svg width="18" height="18"><use href="#ic-bus" style="color:white;stroke:white"/></svg>
+    <svg width="18" height="18" style="stroke:white"><use href="#ic-bus"/></svg>
   </div>
   <h1>JU <span>Bus</span> Locator</h1>
   <span class="live-badge"><div class="live-dot"></div> Live</span>
@@ -203,7 +200,7 @@
 <div id="controls">
   <div class="select-wrap">
     <span class="select-icon">
-      <svg width="14" height="14" style="color:var(--muted);stroke:var(--muted)"><use href="#ic-bus"/></svg>
+      <svg width="14" height="14" style="stroke:var(--muted)"><use href="#ic-bus"/></svg>
     </span>
     <select id="busSelect">
       <option value="all">All Buses</option>
@@ -245,7 +242,7 @@
   <div class="pulse-dot"></div>
   <span id="banner-text">Calculating distance...</span>
 </div>
-<div id="status" id="statusBar">
+<div id="status">
   <svg width="12" height="12" style="stroke:var(--muted);animation:spin-anim 1s linear infinite"><use href="#ic-spin"/></svg>
   Waiting for bus location...
 </div>
@@ -266,10 +263,6 @@
     <div><div>Lng</div><strong id="lngVal">--</strong></div>
   </div>
 </div>
-
-<style>
-  @keyframes spin-anim { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-</style>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
@@ -300,11 +293,25 @@
     bus7:'#8b5cf6', bus8:'#ec4899', bus9:'#14b8a6'
   };
 
-  // Inline SVG bus icon for map pins (self-contained, no external dependency)
-  function makeBusIcon(busId) {
+  // Human-readable direction label
+  function dirLabel(dir) {
+    if (dir === 'campus-to-dhaka') return 'Campus → Dhaka';
+    if (dir === 'dhaka-to-campus') return 'Dhaka → Campus';
+    return null;
+  }
+
+  // Bus map pin — includes a direction tag above the teardrop
+  function makeBusIcon(busId, direction) {
     const color = busColors[busId] || '#3b82f6';
     const num   = busId.replace('bus','');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
+    const label = dirLabel(direction);
+
+    // Direction tag HTML (only shown when direction is known)
+    const tagHtml = label
+      ? `<div class="dir-tag">${label}</div>`
+      : '';
+
+    const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
       <defs>
         <filter id="sh${num}" x="-40%" y="-30%" width="180%" height="180%">
           <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="${color}" flood-opacity="0.4"/>
@@ -313,24 +320,30 @@
       <path d="M20 1C10.06 1 2 9.06 2 19c0 11 18 32 18 32S38 30 38 19C38 9.06 29.94 1 20 1z"
             fill="${color}" filter="url(#sh${num})"/>
       <circle cx="20" cy="18" r="12" fill="white"/>
-      <!-- mini bus shape -->
       <rect x="13" y="13" width="14" height="9" rx="2" fill="${color}"/>
       <rect x="14" y="12" width="12" height="2" rx="1" fill="${color}"/>
       <circle cx="16" cy="22" r="1.5" fill="${color}"/>
       <circle cx="24" cy="22" r="1.5" fill="${color}"/>
       <line x1="13" y1="17" x2="27" y2="17" stroke="white" stroke-width="1"/>
-      <!-- bus number -->
       <text x="20" y="16" text-anchor="middle"
             font-family="Nunito,Arial,sans-serif" font-weight="800"
             font-size="7" fill="white">${num}</text>
     </svg>`;
+
+    const html = `<div class="bus-label-wrap">${tagHtml}${pinSvg}</div>`;
+
+    // iconAnchor points to tip of pin. Extra height for the tag when present.
+    const tagH = label ? 20 : 0;
     return L.divIcon({
-      html: svg, className:'',
-      iconSize:[40,52], iconAnchor:[20,52], popupAnchor:[0,-54]
+      html,
+      className: '',
+      iconSize:    [100, 52 + tagH],
+      iconAnchor:  [50,  52 + tagH],   // horizontal center, bottom tip
+      popupAnchor: [0,  -(52 + tagH)]
     });
   }
 
-  // Inline SVG person icon for student pin
+  // Student pin
   function makeStudentIcon() {
     const color = '#6366f1';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
@@ -342,7 +355,6 @@
       <path d="M18 1C9.16 1 2 8.16 2 17c0 10 16 30 16 30S34 27 34 17C34 8.16 26.84 1 18 1z"
             fill="${color}" filter="url(#shStu)"/>
       <circle cx="18" cy="16" r="11" fill="white"/>
-      <!-- person shape -->
       <circle cx="18" cy="11" r="3" fill="${color}"/>
       <path d="M11 24 Q18 18 25 24" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round"/>
       <line x1="18" y1="18" x2="18" y2="23" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
@@ -350,61 +362,83 @@
       <line x1="15" y1="23" x2="13" y2="27" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
       <line x1="21" y1="23" x2="23" y2="27" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`;
-    return L.divIcon({
-      html: svg, className:'',
-      iconSize:[36,48], iconAnchor:[18,48], popupAnchor:[0,-50]
-    });
+    return L.divIcon({ html:svg, className:'', iconSize:[36,48], iconAnchor:[18,48], popupAnchor:[0,-50] });
   }
 
-  const busMarkers   = {};
-  const busListeners = {};
-  let studentMarker  = null;
-  let studentLat     = null;
-  let studentLng     = null;
+  const busMarkers    = {};
+  const busListeners  = {};
+  const busDirections = {}; // store latest direction per bus
+  let studentMarker   = null;
+  let studentLat      = null;
+  let studentLng      = null;
 
-  function getDistance(lat1, lng1, lat2, lng2) {
-    const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  function getDistance(lat1,lng1,lat2,lng2){
+    const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
     const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
 
-  function updateDistanceBanner() {
-    if (studentLat===null) return;
+  function updateDistanceBanner(){
+    if(studentLat===null) return;
     let closestDist=Infinity, closestBus=null;
-    for (const busId in busMarkers) {
+    for(const busId in busMarkers){
       const pos=busMarkers[busId].getLatLng();
       const dist=getDistance(studentLat,studentLng,pos.lat,pos.lng);
-      if (dist<closestDist) { closestDist=dist; closestBus=busId; }
+      if(dist<closestDist){closestDist=dist;closestBus=busId;}
     }
-    if (!closestBus) return;
+    if(!closestBus) return;
     const banner=document.getElementById('distance-banner');
     const bannerText=document.getElementById('banner-text');
     banner.style.display='flex';
-    const label=closestBus.replace('bus','Bus ');
-    if (closestDist<100)       { banner.style.background='#166534'; bannerText.textContent=`${label} is HERE — less than 100m!`; }
-    else if (closestDist<500)  { banner.style.background='#92400e'; bannerText.textContent=`${label} is ${Math.round(closestDist)}m away — arriving soon!`; }
-    else                       { banner.style.background='#1e3a5f'; bannerText.textContent=`Nearest: ${label} — ${(closestDist/1000).toFixed(2)} km away`; }
+    const busNum  = closestBus.replace('bus','Bus ');
+    const dirText = dirLabel(busDirections[closestBus]);
+    const dirPart = dirText ? ` · ${dirText}` : '';
+
+    if(closestDist<100)      { banner.style.background='#166534'; bannerText.textContent=`${busNum}${dirPart} — HERE! (<100m)`; }
+    else if(closestDist<500) { banner.style.background='#92400e'; bannerText.textContent=`${busNum}${dirPart} — ${Math.round(closestDist)}m away!`; }
+    else                     { banner.style.background='#1e3a5f'; bannerText.textContent=`Nearest: ${busNum}${dirPart} — ${(closestDist/1000).toFixed(2)} km`; }
     notifyIfClose(closestDist);
   }
 
-  function setStatus(iconId, color, text) {
-    const bar = document.getElementById('status');
-    bar.innerHTML = `<svg width="12" height="12" style="stroke:${color};flex-shrink:0"><use href="#${iconId}"/></svg> ${text}`;
+  function setStatus(iconId,color,text){
+    const bar=document.getElementById('status');
+    bar.innerHTML=`<svg width="12" height="12" style="stroke:${color};flex-shrink:0"><use href="#${iconId}"/></svg> ${text}`;
   }
 
-  function trackBus(busId) {
+  function trackBus(busId){
     const busRef=ref(db,'buses/'+busId);
-    const icon=makeBusIcon(busId);
     onValue(busRef,(snapshot)=>{
       const data=snapshot.val(); if(!data) return;
-      if(!busMarkers[busId]) {
-        busMarkers[busId]=L.marker([data.lat,data.lng],{icon}).addTo(map)
-          .bindPopup(`<div style="font-family:Nunito,sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
+
+      // Store latest direction
+      busDirections[busId] = data.direction || null;
+
+      // Rebuild icon with updated direction label
+      const icon=makeBusIcon(busId, data.direction);
+
+      if(!busMarkers[busId]){
+        busMarkers[busId]=L.marker([data.lat,data.lng],{icon}).addTo(map);
+      } else {
+        busMarkers[busId].setLatLng([data.lat,data.lng]);
+        busMarkers[busId].setIcon(icon);
+      }
+
+      // Update popup content
+      const dl = dirLabel(data.direction);
+      const dirLine = dl
+        ? `<div style="font-size:11px;color:#64748b;margin-top:2px">${dl}</div>`
+        : '';
+      busMarkers[busId].bindPopup(`
+        <div style="font-family:Nunito,sans-serif;font-size:13px">
+          <div style="font-weight:700;display:flex;align-items:center;gap:6px">
             <span style="width:10px;height:10px;border-radius:50%;background:${busColors[busId]};display:inline-block"></span>
-            Bus ${busId.replace('bus','')} — Live</div>`);
-      } else { busMarkers[busId].setLatLng([data.lat,data.lng]); }
-      document.getElementById('latVal').textContent=data.lat.toFixed(5);
-      document.getElementById('lngVal').textContent=data.lng.toFixed(5);
+            Bus ${busId.replace('bus','')} — Live
+          </div>
+          ${dirLine}
+        </div>`);
+
+      document.getElementById('latVal').textContent    =data.lat.toFixed(5);
+      document.getElementById('lngVal').textContent    =data.lng.toFixed(5);
       document.getElementById('lastUpdate').textContent=new Date(data.timestamp).toLocaleTimeString();
       setStatus('ic-signal','#22c55e','Live tracking active');
       updateDistanceBanner();
@@ -412,9 +446,10 @@
     busListeners[busId]=busRef;
   }
 
-  function stopTrackingBus(busId) {
+  function stopTrackingBus(busId){
     if(busListeners[busId]){off(busListeners[busId]);delete busListeners[busId];}
     if(busMarkers[busId]){map.removeLayer(busMarkers[busId]);delete busMarkers[busId];}
+    delete busDirections[busId];
   }
 
   function trackAllBuses()   { for(let i=1;i<=9;i++) trackBus('bus'+i); }
@@ -427,7 +462,7 @@
     e.target.value==='all' ? trackAllBuses() : trackBus(e.target.value);
   });
 
-  function setStudentLocation(lat,lng,label) {
+  function setStudentLocation(lat,lng,label){
     studentLat=lat; studentLng=lng;
     if(studentMarker) map.removeLayer(studentMarker);
     studentMarker=L.marker([lat,lng],{icon:makeStudentIcon()}).addTo(map)
@@ -436,7 +471,7 @@
     updateDistanceBanner();
   }
 
-  window.getStudentGPS = function() {
+  window.getStudentGPS=function(){
     if(!navigator.geolocation){showStopSelector('GPS not supported.');return;}
     setStatus('ic-crosshairs','#3b82f6','Getting your location...');
     navigator.geolocation.getCurrentPosition(
@@ -448,14 +483,14 @@
     );
   };
 
-  window.pickStop = function() {
+  window.pickStop=function(){
     const val=document.getElementById('stopSelect').value; if(!val) return;
     const [lat,lng]=val.split(',').map(Number);
     setStudentLocation(lat,lng,'Selected Stop');
     setStatus('ic-check','#22c55e','Stop selected');
   };
 
-  function showStopSelector(msg) {
+  function showStopSelector(msg){
     setStatus('ic-warn','#f59e0b',msg);
     document.getElementById('stop-selector').style.display='flex';
   }
@@ -463,7 +498,7 @@
   let notifiedClose=false;
   async function setupNotifications(){
     if(!('serviceWorker' in navigator)) return;
-    try { await navigator.serviceWorker.register('/JU-bus-locator/sw.js'); } catch(e){console.error(e);}
+    try{ await navigator.serviceWorker.register('/JU-bus-locator/sw.js'); }catch(e){console.error(e);}
     const p=await Notification.requestPermission();
     if(p!=='granted') alert('Please allow notifications to get bus alerts!');
   }
