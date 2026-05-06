@@ -371,7 +371,11 @@ const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
         console.warn('Wake lock failed:', e);
       }
     }
-
+   // Auto-stop after 2.5 hours
+    autoStopTimer = setTimeout(() => {
+      setStatus('idle','ic-warn','var(--warn)','Auto-stopped after 2.5 hours.');
+      stopTracking();
+    }, AUTO_STOP_MS);
     watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -395,6 +399,12 @@ const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
 
   window.stopTracking = async function () {
     navigator.geolocation.clearWatch(watchId);
+
+    // Clear auto-stop timer
+    if (autoStopTimer) {
+      clearTimeout(autoStopTimer);
+      autoStopTimer = null;
+    }
 
     // Release wake lock
     if (wakeLock) {
