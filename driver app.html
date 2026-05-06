@@ -352,6 +352,8 @@
   let watchId = null;
 
 let wakeLock = null;
+let autoStopTimer = null;
+const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
 
   window.startTracking = async function () {
     if (!selectedBus)       { setStatus('error','ic-warn','var(--danger)','Please select a bus first.'); return; }
