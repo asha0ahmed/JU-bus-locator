@@ -130,7 +130,6 @@
     }
     .info-item strong { color:var(--text); font-weight:700; font-size:.82rem; display:block; }
 
-    /* Direction label floating above each bus pin */
     .bus-label-wrap {
       display:flex; flex-direction:column; align-items:center; gap:2px;
     }
@@ -363,6 +362,7 @@
   const busMarkers    = {};
   const busListeners  = {};
   const busDirections = {};
+  const busTimestamps = {}; // stores last known timestamp per bus
   let studentMarker   = null;
   let studentLat      = null;
   let studentLng      = null;
@@ -400,6 +400,13 @@
     bar.innerHTML=`<svg width="12" height="12" style="stroke:${color};flex-shrink:0"><use href="#${iconId}"/></svg> ${text}`;
   }
 
+  // Converts a millisecond age into a human-readable string
+  function ageString(age) {
+    if (age < 60000)    return `${Math.round(age/1000)}s ago`;
+    if (age < 3600000)  return `${Math.floor(age/60000)}m ${Math.round((age%60000)/1000)}s ago`;
+    return `${Math.floor(age/3600000)}h ${Math.floor((age%3600000)/60000)}m ago`;
+  }
+
   function trackBus(busId){
     const busRef=ref(db,'buses/'+busId);
     onValue(busRef,(snapshot)=>{
@@ -407,15 +414,12 @@
 
       const age = Date.now() - data.timestamp;
       if(age > 30000) {
-        let agoStr;
-        if (age < 60000) agoStr = `${Math.round(age/1000)}s ago`;
-        else if (age < 3600000) agoStr = `${Math.floor(age/60000)}m ${Math.round((age%60000)/1000)}s ago`;
-        else agoStr = `${Math.floor(age/3600000)}h ${Math.floor((age%3600000)/60000)}m ago`;
-        setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${agoStr}`);
+        setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${ageString(age)}`);
         return;
       }
 
       busDirections[busId] = data.direction || null;
+      busTimestamps[busId] = data.timestamp; // save timestamp every time we get fresh data
 
       const icon=makeBusIcon(busId, data.direction);
 
@@ -452,6 +456,7 @@
     if(busListeners[busId]){off(busListeners[busId]);delete busListeners[busId];}
     if(busMarkers[busId]){map.removeLayer(busMarkers[busId]);delete busMarkers[busId];}
     delete busDirections[busId];
+    delete busTimestamps[busId];
   }
 
   function trackAllBuses()   { for(let i=1;i<=9;i++) trackBus('bus'+i); }
@@ -501,7 +506,6 @@
   async function setupNotifications(){
     if(!('serviceWorker' in navigator)) return;
     try {
-      // Use relative path so it works on any hosting environment
       await navigator.serviceWorker.register('./sw.js');
     } catch(e) { console.error('SW registration failed:', e); }
     const p=await Notification.requestPermission();
@@ -517,6 +521,20 @@
 
   setupNotifications();
   trackAllBuses();
+
+  // Every 10 seconds, re-check the age of the last known timestamp for each bus.
+  // Firebase stops firing events when the driver closes the app, so without this
+  // the student page would stay stuck on "Live tracking active" forever.
+  setInterval(() => {
+    for (const busId in busTimestamps) {
+      const age = Date.now() - busTimestamps[busId];
+      if (age > 30000) {
+        setStatus('ic-warn','#f59e0b',
+          `Bus ${busId.replace('bus','')} signal lost — last seen ${ageString(age)}`);
+      }
+    }
+  }, 10000);
+
 </script>
 </body>
 </html>
