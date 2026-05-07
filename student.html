@@ -130,7 +130,7 @@
     }
     .info-item strong { color:var(--text); font-weight:700; font-size:.82rem; display:block; }
 
-    /* ── Direction label floating above each bus pin ── */
+    /* Direction label floating above each bus pin */
     .bus-label-wrap {
       display:flex; flex-direction:column; align-items:center; gap:2px;
     }
@@ -139,7 +139,7 @@
       border:1px solid rgba(255,255,255,.15);
       border-radius:6px;
       padding:2px 7px;
-      font-family:'Nunito',sans-serif;
+      font-family:'Nunito',Arial,sans-serif;
       font-size:10px; font-weight:700;
       color:#fff;
       white-space:nowrap;
@@ -293,20 +293,17 @@
     bus7:'#8b5cf6', bus8:'#ec4899', bus9:'#14b8a6'
   };
 
-  // Human-readable direction label
   function dirLabel(dir) {
     if (dir === 'campus-to-dhaka') return 'Campus → Dhaka';
     if (dir === 'dhaka-to-campus') return 'Dhaka → Campus';
     return null;
   }
 
-  // Bus map pin — includes a direction tag above the teardrop
   function makeBusIcon(busId, direction) {
     const color = busColors[busId] || '#3b82f6';
     const num   = busId.replace('bus','');
     const label = dirLabel(direction);
 
-    // Direction tag HTML (only shown when direction is known)
     const tagHtml = label
       ? `<div class="dir-tag">${label}</div>`
       : '';
@@ -332,18 +329,16 @@
 
     const html = `<div class="bus-label-wrap">${tagHtml}${pinSvg}</div>`;
 
-    // iconAnchor points to tip of pin. Extra height for the tag when present.
     const tagH = label ? 20 : 0;
     return L.divIcon({
       html,
       className: '',
       iconSize:    [100, 52 + tagH],
-      iconAnchor:  [50,  52 + tagH],   // horizontal center, bottom tip
+      iconAnchor:  [50,  52 + tagH],
       popupAnchor: [0,  -(52 + tagH)]
     });
   }
 
-  // Student pin
   function makeStudentIcon() {
     const color = '#6366f1';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
@@ -367,7 +362,7 @@
 
   const busMarkers    = {};
   const busListeners  = {};
-  const busDirections = {}; // store latest direction per bus
+  const busDirections = {};
   let studentMarker   = null;
   let studentLat      = null;
   let studentLng      = null;
@@ -407,24 +402,21 @@
 
   function trackBus(busId){
     const busRef=ref(db,'buses/'+busId);
-onValue(busRef,(snapshot)=>{
+    onValue(busRef,(snapshot)=>{
       const data=snapshot.val(); if(!data) return;
-      
-      // If last update was more than 30 seconds ago, treat as offline
+
       const age = Date.now() - data.timestamp;
       if(age > 30000) {
         let agoStr;
-if (age < 60000) agoStr = `${Math.round(age/1000)}s ago`;
-else if (age < 3600000) agoStr = `${Math.floor(age/60000)}m ${Math.round((age%60000)/1000)}s ago`;
-else agoStr = `${Math.floor(age/3600000)}h ${Math.floor((age%3600000)/60000)}m ago`;
-setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${agoStr}`);
+        if (age < 60000) agoStr = `${Math.round(age/1000)}s ago`;
+        else if (age < 3600000) agoStr = `${Math.floor(age/60000)}m ${Math.round((age%60000)/1000)}s ago`;
+        else agoStr = `${Math.floor(age/3600000)}h ${Math.floor((age%3600000)/60000)}m ago`;
+        setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — last seen ${agoStr}`);
         return;
       }
 
-      // Store latest direction
       busDirections[busId] = data.direction || null;
 
-      // Rebuild icon with updated direction label
       const icon=makeBusIcon(busId, data.direction);
 
       if(!busMarkers[busId]){
@@ -434,7 +426,6 @@ setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — la
         busMarkers[busId].setIcon(icon);
       }
 
-      // Update popup content
       const dl = dirLabel(data.direction);
       const dirLine = dl
         ? `<div style="font-size:11px;color:#64748b;margin-top:2px">${dl}</div>`
@@ -509,9 +500,12 @@ setStatus('ic-warn','#f59e0b',`Bus ${busId.replace('bus','')} signal lost — la
   let notifiedClose=false;
   async function setupNotifications(){
     if(!('serviceWorker' in navigator)) return;
-    try{ await navigator.serviceWorker.register('/JU-bus-locator/sw.js'); }catch(e){console.error(e);}
+    try {
+      // Use relative path so it works on any hosting environment
+      await navigator.serviceWorker.register('./sw.js');
+    } catch(e) { console.error('SW registration failed:', e); }
     const p=await Notification.requestPermission();
-    if(p!=='granted') alert('Please allow notifications to get bus alerts!');
+    if(p!=='granted') console.warn('Notifications not granted.');
   }
   function notifyIfClose(d){
     if(d<500&&!notifiedClose){
