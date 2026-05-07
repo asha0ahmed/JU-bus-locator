@@ -13,6 +13,7 @@
       --accent:   #3b82f6;
       --danger:   #ef4444;
       --success:  #22c55e;
+      --warn:     #f59e0b;
       --text:     #f1f5f9;
       --muted:    #64748b;
       --border:   #2d3748;
@@ -349,11 +350,10 @@
     document.getElementById('dir-to-campus').classList.toggle('selected', dir === 'dhaka-to-campus');
   };
 
-  let watchId = null;
-
-let wakeLock = null;
-let autoStopTimer = null;
-const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
+  let watchId       = null;
+  let wakeLock      = null;
+  let autoStopTimer = null;
+  const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
 
   window.startTracking = async function () {
     if (!selectedBus)       { setStatus('error','ic-warn','var(--danger)','Please select a bus first.'); return; }
@@ -371,11 +371,13 @@ const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
         console.warn('Wake lock failed:', e);
       }
     }
-   // Auto-stop after 2.5 hours
+
+    // Auto-stop after 2.5 hours
     autoStopTimer = setTimeout(() => {
-      setStatus('idle','ic-warn','var(--warn)','Auto-stopped after 2.5 hours.');
       stopTracking();
+      setStatus('idle','ic-warn','var(--warn)','Auto-stopped after 2.5 hours.');
     }, AUTO_STOP_MS);
+
     watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -408,37 +410,10 @@ const AUTO_STOP_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
 
     // Release wake lock
     if (wakeLock) {
-      await wakeLock.release();
+      try { await wakeLock.release(); } catch(e) {}
       wakeLock = null;
     }
 
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled  = true;
-    document.getElementById('coords-row').style.display = 'none';
-    setStatus('idle','ic-stop','var(--muted)','Location sharing stopped.');
-  };
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        set(ref(db, 'buses/' + selectedBus), {
-          lat:       latitude,
-          lng:       longitude,
-          direction: selectedDirection,
-          timestamp: Date.now()
-        });
-        const dirLabel = selectedDirection === 'campus-to-dhaka' ? 'Campus → Dhaka' : 'Dhaka → Campus';
-        setStatus('active','ic-satellite','#22c55e',
-          `${selectedBus.replace('bus','Bus ')} · ${dirLabel}`);
-        document.getElementById('latOut').textContent = latitude.toFixed(5);
-        document.getElementById('lngOut').textContent = longitude.toFixed(5);
-        document.getElementById('coords-row').style.display = 'flex';
-      },
-      (err) => { setStatus('error','ic-warn','var(--danger)','GPS Error: ' + err.message); },
-      { enableHighAccuracy: true }
-    );
-  };
-
-  window.stopTracking = function () {
-    navigator.geolocation.clearWatch(watchId);
     document.getElementById('startBtn').disabled = false;
     document.getElementById('stopBtn').disabled  = true;
     document.getElementById('coords-row').style.display = 'none';
